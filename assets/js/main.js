@@ -175,7 +175,9 @@
             "checklistComplete": "Checklist completed — great job!",
             "templateAlert": "Excel template download will be available soon.",
             "libraryAlert": "Python library repository is coming soon.",
-            "mobileAlert": "Mobile calculator app is under development."
+            "mobileAlert": "Mobile calculator app is under development.",
+            "stepModalTitle": "API-560 Step",
+            "stepModalDescription": "Step description will appear here"
         },
         "ar": {
             "heroTitle": "كفاءة الأفران المشتعلة",
@@ -350,7 +352,9 @@
             "checklistComplete": "تم إكمال عناصر القائمة — عمل رائع!",
             "templateAlert": "قالب إكسل سيكون متاحًا قريبًا.",
             "libraryAlert": "مكتبة بايثون قيد الإعداد وستتوفر قريبًا.",
-            "mobileAlert": "تطبيق الهاتف قيد التطوير وسيكون متاحًا قريبًا."
+            "mobileAlert": "تطبيق الهاتف قيد التطوير وسيكون متاحًا قريبًا.",
+            "stepModalTitle": "خطوة API-560",
+            "stepModalDescription": "وصف الخطوة سيظهر هنا"
         }
     };
     const mermaidDefinitions = {
@@ -410,6 +414,12 @@
     const faqQuestions = document.querySelectorAll('.faq-question');
     const alertButtons = document.querySelectorAll('[data-alert-key]');
     const stackTempUnitNode = stackTempValue ? stackTempValue.nextSibling : null;
+    const stepModal = document.getElementById('stepModal');
+    const stepModalClose = document.getElementById('closeModal');
+    const stepModalNumber = document.getElementById('modalStepNumber');
+    const stepModalTitle = document.getElementById('modalStepTitle');
+    const stepModalDescription = document.getElementById('modalStepDescription');
+    const stepperSteps = document.querySelectorAll('.stepper-step');
 
     let currentLanguage = localStorage.getItem('preferredLanguage') || 'en';
     if (!translations[currentLanguage]) {
@@ -891,6 +901,49 @@
       });
     }
 
+    function showStepModal(stepNumber) {
+      if (!stepModal || !stepNumber) return;
+
+      // Check if device is mobile/tablet (touch device or screen width)
+      const isMobile = window.innerWidth <= 768 || 'ontouchstart' in window;
+      if (!isMobile) return; // Only show modal on mobile devices
+
+      const stepKey = `apiStep${stepNumber}`;
+      const translation = translations[currentLanguage];
+      const stepDescription = translation[stepKey] || `Step ${stepNumber} description`;
+
+      // Update modal content
+      if (stepModalNumber) {
+        stepModalNumber.textContent = stepNumber;
+      }
+      if (stepModalTitle) {
+        const titleText = `${translation.stepModalTitle || 'API-560 Step'} ${stepNumber}`;
+        stepModalTitle.textContent = titleText;
+      }
+      if (stepModalDescription) {
+        stepModalDescription.textContent = stepDescription;
+      }
+
+      // Show modal
+      stepModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+      // Focus trap for accessibility
+      setTimeout(() => {
+        const firstFocusable = stepModal.querySelector('button, [tabindex]:not([tabindex="-1"])');
+        if (firstFocusable) {
+          firstFocusable.focus();
+        }
+      }, 100);
+    }
+
+    function hideStepModal() {
+      if (!stepModal) return;
+
+      stepModal.style.display = 'none';
+      document.body.style.overflow = ''; // Restore scrolling
+    }
+
     function bindEvents() {
       darkModeToggle?.addEventListener('click', () => {
         setThemeState(!isDarkMode);
@@ -1040,6 +1093,42 @@
             }
           }
         });
+      });
+
+      // Modal event handlers
+      stepModalClose?.addEventListener('click', hideStepModal);
+
+      // Close modal when clicking outside
+      stepModal?.addEventListener('click', (event) => {
+        if (event.target === stepModal) {
+          hideStepModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && stepModal && stepModal.style.display === 'flex') {
+          hideStepModal();
+        }
+      });
+
+      // Step click handlers for mobile
+      stepperSteps.forEach((step) => {
+        step.addEventListener('click', () => {
+          const stepNumber = step.getAttribute('data-step');
+          if (stepNumber) {
+            showStepModal(stepNumber);
+          }
+        });
+
+        // Add touch feedback for mobile
+        step.addEventListener('touchstart', () => {
+          step.style.transform = 'scale(0.95)';
+        }, { passive: true });
+
+        step.addEventListener('touchend', () => {
+          step.style.transform = '';
+        }, { passive: true });
       });
     }
 
