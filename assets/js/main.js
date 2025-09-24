@@ -924,8 +924,10 @@
         stepModalDescription.textContent = stepDescription;
       }
 
-      // Show modal
+      // Show modal at current scroll position
+      const scrollY = window.scrollY || document.documentElement.scrollTop;
       stepModal.style.display = 'flex';
+      stepModal.style.top = `${scrollY}px`;
       document.body.style.overflow = 'hidden'; // Prevent background scrolling
 
       // Focus trap for accessibility
@@ -941,6 +943,7 @@
       if (!stepModal) return;
 
       stepModal.style.display = 'none';
+      stepModal.style.top = '0px'; // Reset position
       document.body.style.overflow = ''; // Restore scrolling
     }
 
