@@ -67,12 +67,23 @@
             touch-action: pan-y;
             overscroll-behavior-x: none;
             overscroll-behavior-inline: contain;
-            background-image: radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 55%), radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.1), transparent 55%);
+            background-image:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.15), transparent 60%),
+                radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.12), transparent 65%),
+                radial-gradient(circle at center, rgba(167, 139, 250, 0.08), transparent 70%);
             background-repeat: no-repeat;
             background-attachment: fixed;
+            animation: subtleFloat 20s ease-in-out infinite;
+        }
+        @keyframes subtleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
         html.dark body {
-            background-image: radial-gradient(circle at top left, rgba(59, 130, 246, 0.22), transparent 60%), radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.18), transparent 65%);
+            background-image:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 65%),
+                radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.20), transparent 70%),
+                radial-gradient(circle at center, rgba(167, 139, 250, 0.12), transparent 75%);
         }
         body.mobile-menu-open,
         body.toc-open {
@@ -114,42 +125,59 @@
         .hero-section::after {
             content: '';
             position: absolute;
-            width: 320px;
-            height: 320px;
+            width: 400px;
+            height: 400px;
             border-radius: 9999px;
-            filter: blur(60px);
-            opacity: 0.45;
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: heroFloat 15s ease-in-out infinite alternate;
+        }
+        @keyframes heroFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-20px, -15px) scale(1.1); }
         }
         .hero-section::before {
-            top: -80px;
-            left: -120px;
-            background: rgba(191, 219, 254, 0.6);
+            top: -100px;
+            left: -150px;
+            background: linear-gradient(135deg, rgba(191, 219, 254, 0.7), rgba(147, 197, 253, 0.5));
+            animation-delay: 0s;
         }
         .hero-section::after {
-            bottom: -120px;
-            right: -80px;
-            background: rgba(129, 140, 248, 0.55);
+            bottom: -150px;
+            right: -100px;
+            background: linear-gradient(135deg, rgba(129, 140, 248, 0.65), rgba(99, 102, 241, 0.45));
+            animation-delay: -7s;
         }
         .card-elevated {
             position: relative;
             overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .card-elevated::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(99,102,241,0.05));
+            background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(99,102,241,0.08), rgba(167,139,250,0.06));
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none;
         }
         .card-elevated:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow:
+                0 25px 50px rgba(15, 23, 42, 0.15),
+                0 10px 25px rgba(59, 130, 246, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
         .card-elevated:hover::after {
             opacity: 1;
+        }
+        .dark .card-elevated:hover {
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.3),
+                0 10px 25px rgba(59, 130, 246, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
         .slider-container input[type="range"] {
             min-height: 44px;
@@ -161,28 +189,85 @@
             cursor: pointer;
         }
         .slider-container input[type="range"]::-webkit-slider-track {
-            background: #e5e7eb;
-            height: 8px;
-            border-radius: 4px;
+            background: linear-gradient(90deg, #e5e7eb 0%, #d1d5db 100%);
+            height: 10px;
+            border-radius: 5px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
         .slider-container input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            background: #2563eb;
-            height: 24px;
-            width: 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            height: 28px;
+            width: 28px;
             border-radius: 50%;
             border: 3px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow:
+                0 4px 12px rgba(37, 99, 235, 0.4),
+                0 2px 4px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow:
+                0 6px 16px rgba(37, 99, 235, 0.5),
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(0.95);
         }
         .responsive-table {
             width: 100%;
             table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.9));
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow:
+                0 10px 25px rgba(0, 0, 0, 0.1),
+                0 4px 10px rgba(0, 0, 0, 0.05);
         }
-        .responsive-table th,
+        .responsive-table th {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 16px;
+            font-weight: 600;
+            text-align: left;
+            border: none;
+            position: relative;
+        }
+        .responsive-table th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
         .responsive-table td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+            transition: all 0.2s ease;
             white-space: normal;
             word-break: break-word;
+        }
+        .responsive-table tr:hover td {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.05), rgba(99, 102, 241, 0.03));
+        }
+        .dark .responsive-table {
+            background: linear-gradient(145deg, rgba(55, 65, 81, 0.9), rgba(31, 41, 55, 0.9));
+        }
+        .dark .responsive-table td {
+            border-bottom-color: rgba(75, 85, 99, 0.5);
+        }
+        .dark .responsive-table tr:hover td {
+            background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.06));
         }
         .stepper-step.active {
             background-color: #2563eb;
@@ -274,21 +359,79 @@
             .tooltip .tooltiptext {
                 display: none;
             }
+            .hero-section {
+                padding: 2rem 1rem;
+            }
+            .hero-section h1 {
+                font-size: 2rem;
+                line-height: 2.5rem;
+            }
+            .hero-section p {
+                font-size: 1rem;
+                line-height: 1.5rem;
+            }
+            .card-elevated {
+                margin-bottom: 1rem;
+            }
+            .responsive-table {
+                font-size: 0.875rem;
+            }
+            .responsive-table th,
+            .responsive-table td {
+                padding: 12px 8px;
+            }
+            .slider-container {
+                margin: 1rem 0;
+            }
+            .section-padding {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .hero-section {
+                padding: 1.5rem 0.75rem;
+            }
+            .hero-section h1 {
+                font-size: 1.75rem;
+                line-height: 2rem;
+            }
+            .hero-section .mt-6 {
+                margin-top: 1rem;
+                gap: 0.75rem;
+            }
+            .hero-section button {
+                padding: 0.75rem 1.5rem;
+                font-size: 0.875rem;
+            }
+            .responsive-table {
+                font-size: 0.75rem;
+            }
+            .responsive-table th,
+            .responsive-table td {
+                padding: 8px 6px;
+            }
+            .section-padding {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+                padding-top: 2rem;
+                padding-bottom: 2rem;
+            }
         }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hero-section">
+    <header class="bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 text-white hero-section relative overflow-hidden">
         <div class="container-max section-padding text-center relative z-10">
-            <h1 class="text-4xl md:text-6xl font-bold mb-4" data-i18n="heroTitle">Fired Heater Efficiency</h1>
-            <p class="text-xl md:text-2xl mb-2" data-i18n="heroSubtitle">API-560 Heat Loss Method, Measurement & Best Practices</p>
-            <p class="text-lg opacity-90" data-i18n="heroTagline">Master the science of thermal efficiency optimization in industrial fired heaters</p>
+            <h1 class="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight" data-i18n="heroTitle">Fired Heater Efficiency</h1>
+            <p class="text-lg sm:text-xl md:text-2xl mb-2 leading-relaxed" data-i18n="heroSubtitle">API-560 Heat Loss Method, Measurement & Best Practices</p>
+            <p class="text-base sm:text-lg opacity-90 max-w-4xl mx-auto" data-i18n="heroTagline">Master the science of thermal efficiency optimization in industrial fired heaters</p>
             <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <button id="darkModeToggle" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200" aria-label="Toggle dark mode" data-i18n="darkModeToggle" data-i18n-attr="aria-label" data-i18n-attr-key="darkModeToggleLabel">
+                <button id="darkModeToggle" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/20 hover:border-white/40 hover:shadow-lg hover:shadow-white/20 hover:scale-105" aria-label="Toggle dark mode" data-i18n="darkModeToggle" data-i18n-attr="aria-label" data-i18n-attr-key="darkModeToggleLabel">
                     🌙 Dark Mode
                 </button>
-                <button id="languageToggle" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200" aria-label="Switch language" data-i18n="languageToggle" data-i18n-attr="aria-label" data-i18n-attr-key="languageToggleLabel">
+                <button id="languageToggle" class="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/20 hover:border-white/40 hover:shadow-lg hover:shadow-white/20 hover:scale-105" aria-label="Switch language" data-i18n="languageToggle" data-i18n-attr="aria-label" data-i18n-attr-key="languageToggleLabel">
                     🌐 العربية
                 </button>
             </div>
