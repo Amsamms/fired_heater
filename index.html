@@ -21,10 +21,75 @@
         }
     </script>
     <style>
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        body {
+            touch-action: pan-y;
+            overscroll-behavior-x: none;
+            overscroll-behavior-inline: contain;
+            background-image: radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 55%), radial-gradient(circle at bottom right, rgba(99, 102, 241, 0.1), transparent 55%);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        html.dark body {
+            background-image: radial-gradient(circle at top left, rgba(59, 130, 246, 0.22), transparent 60%), radial-gradient(circle at bottom right, rgba(129, 140, 248, 0.18), transparent 65%);
+        }
+        body.mobile-menu-open,
+        body.toc-open {
+            height: 100vh;
+            overflow: hidden;
+        }
         .sticky-nav { backdrop-filter: blur(12px); }
         .nav-active { @apply text-blue-600 border-b-2 border-blue-600; }
         .section-padding { @apply py-16 px-4 sm:px-6 lg:px-8; }
         .container-max { @apply max-w-7xl mx-auto; }
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-section::before,
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border-radius: 9999px;
+            filter: blur(60px);
+            opacity: 0.45;
+        }
+        .hero-section::before {
+            top: -80px;
+            left: -120px;
+            background: rgba(191, 219, 254, 0.6);
+        }
+        .hero-section::after {
+            bottom: -120px;
+            right: -80px;
+            background: rgba(129, 140, 248, 0.55);
+        }
+        .card-elevated {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-elevated::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(99,102,241,0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .card-elevated:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+        }
+        .card-elevated:hover::after {
+            opacity: 1;
+        }
         .slider-container input[type="range"] {
             -webkit-appearance: none;
             appearance: none;
@@ -73,18 +138,45 @@
         .dark .tooltip .tooltiptext {
             background-color: #374151;
         }
+        .toc-sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        .toc-sidebar.is-visible {
+            transform: translateX(0);
+        }
+        [dir="rtl"] .toc-sidebar {
+            left: auto;
+            right: 0;
+            transform: translateX(100%);
+        }
+        [dir="rtl"] .toc-sidebar.is-visible {
+            transform: translateX(0);
+        }
+        .toc-button {
+            left: 1rem;
+        }
+        [dir="rtl"] .toc-button {
+            left: auto;
+            right: 1rem;
+        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
     <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <div class="container-max section-padding text-center">
-            <h1 class="text-4xl md:text-6xl font-bold mb-4">Fired Heater Efficiency</h1>
-            <p class="text-xl md:text-2xl mb-2">API-560 Heat Loss Method, Measurement & Best Practices</p>
-            <p class="text-lg opacity-90">Master the science of thermal efficiency optimization in industrial fired heaters</p>
-            <button id="darkModeToggle" class="mt-6 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200" aria-label="Toggle dark mode">
-                🌙 Dark Mode
-            </button>
+    <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white hero-section">
+        <div class="container-max section-padding text-center relative z-10">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4" data-i18n="heroTitle">Fired Heater Efficiency</h1>
+            <p class="text-xl md:text-2xl mb-2" data-i18n="heroSubtitle">API-560 Heat Loss Method, Measurement & Best Practices</p>
+            <p class="text-lg opacity-90" data-i18n="heroTagline">Master the science of thermal efficiency optimization in industrial fired heaters</p>
+            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button id="darkModeToggle" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200" aria-label="Toggle dark mode" data-i18n="darkModeToggle" data-i18n-attr="aria-label" data-i18n-attr-key="darkModeToggleLabel">
+                    🌙 Dark Mode
+                </button>
+                <button id="languageToggle" class="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200" aria-label="Switch language" data-i18n="languageToggle" data-i18n-attr="aria-label" data-i18n-attr-key="languageToggleLabel">
+                    🌐 العربية
+                </button>
+            </div>
         </div>
     </header>
 
@@ -93,13 +185,13 @@
         <div class="container-max px-4">
             <div class="flex items-center justify-between h-16">
                 <div class="hidden md:flex space-x-8 overflow-x-auto">
-                    <a href="#overview" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors">Overview</a>
-                    <a href="#api-560" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors">API-560 Method</a>
-                    <a href="#measurements" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors">Measurements</a>
-                    <a href="#configurations" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors">Complex Configurations</a>
-                    <a href="#examples" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors">Examples</a>
-                    <a href="#tools" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors">Tools & Downloads</a>
-                    <a href="#faq" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors">FAQ</a>
+                    <a href="#overview" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navOverview">Overview</a>
+                    <a href="#api-560" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navApi560">API-560 Method</a>
+                    <a href="#measurements" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navMeasurements">Measurements</a>
+                    <a href="#configurations" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navConfigurations">Complex Configurations</a>
+                    <a href="#examples" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navExamples">Examples</a>
+                    <a href="#tools" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navTools">Tools & Downloads</a>
+                    <a href="#faq" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navFaq">FAQ</a>
                 </div>
                 <button id="mobileMenuToggle" class="md:hidden p-2" aria-label="Toggle mobile menu">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,23 +203,23 @@
         <!-- Mobile Menu -->
         <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
             <div class="px-4 py-2 space-y-1">
-                <a href="#overview" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link">Overview</a>
-                <a href="#api-560" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link">API-560 Method</a>
-                <a href="#measurements" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link">Measurements</a>
-                <a href="#configurations" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link">Complex Configurations</a>
-                <a href="#examples" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link">Examples</a>
-                <a href="#tools" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link">Tools & Downloads</a>
-                <a href="#faq" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link">FAQ</a>
+                <a href="#overview" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navOverview">Overview</a>
+                <a href="#api-560" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navApi560">API-560 Method</a>
+                <a href="#measurements" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navMeasurements">Measurements</a>
+                <a href="#configurations" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navConfigurations">Complex Configurations</a>
+                <a href="#examples" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navExamples">Examples</a>
+                <a href="#tools" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navTools">Tools & Downloads</a>
+                <a href="#faq" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navFaq">FAQ</a>
             </div>
         </div>
     </nav>
 
     <!-- Table of Contents Sidebar -->
-    <div id="tocSidebar" class="fixed left-0 top-20 h-screen w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform -translate-x-full transition-transform duration-300 z-40 overflow-y-auto">
+    <div id="tocSidebar" class="toc-sidebar fixed top-24 md:top-28 h-[calc(100vh-6rem)] w-full max-w-xs md:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-40 overflow-y-auto shadow-xl md:shadow-none rounded-r-3xl md:rounded-none">
         <div class="p-6">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold">Table of Contents</h3>
-                <button id="tocToggle" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" aria-label="Toggle table of contents">
+                <h3 class="text-lg font-semibold" data-i18n="tocTitle">Table of Contents</h3>
+                <button id="tocToggle" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded" aria-label="Toggle table of contents" data-i18n="tocToggle" data-i18n-attr="aria-label">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -140,7 +232,7 @@
     </div>
 
     <!-- TOC Toggle Button -->
-    <button id="tocButton" class="fixed left-4 top-24 z-50 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors" aria-label="Open table of contents">
+    <button id="tocButton" class="toc-button fixed top-28 md:top-32 z-50 p-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors" aria-label="Open table of contents" data-i18n="tocOpen" data-i18n-attr="aria-label">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
         </svg>
@@ -151,22 +243,22 @@
         <!-- Overview Section -->
         <section id="overview" class="section-padding bg-gray-50 dark:bg-gray-800">
             <div class="container-max">
-                <h2 class="text-3xl font-bold mb-8 text-center">What, Why, and How of Fired Heater Efficiency</h2>
+                <h2 class="text-3xl font-bold mb-8 text-center" data-i18n="overviewTitle">What, Why, and How of Fired Heater Efficiency</h2>
                 <div class="grid md:grid-cols-3 gap-8">
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md card-elevated">
                         <div class="text-4xl mb-4 text-center">🔥</div>
-                        <h3 class="text-xl font-semibold mb-3">What is Efficiency?</h3>
-                        <p class="text-gray-600 dark:text-gray-300">Fired heater efficiency measures how effectively fuel energy is converted to useful process heat. Three key metrics: fuel efficiency (commercial), thermal efficiency (holistic), and combustion efficiency (burner performance).</p>
+                        <h3 class="text-xl font-semibold mb-3" data-i18n="overviewCard1Title">What is Efficiency?</h3>
+                        <p class="text-gray-600 dark:text-gray-300" data-i18n="overviewCard1Text">Fired heater efficiency measures how effectively fuel energy is converted to useful process heat. Three key metrics: fuel efficiency (commercial), thermal efficiency (holistic), and combustion efficiency (burner performance).</p>
                     </div>
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md card-elevated">
                         <div class="text-4xl mb-4 text-center">💰</div>
-                        <h3 class="text-xl font-semibold mb-3">Why It Matters</h3>
-                        <p class="text-gray-600 dark:text-gray-300">Fired heaters are the largest energy consumers in refineries. A 1% efficiency improvement on a large heater can save millions annually while reducing emissions and enhancing safety.</p>
+                        <h3 class="text-xl font-semibold mb-3" data-i18n="overviewCard2Title">Why It Matters</h3>
+                        <p class="text-gray-600 dark:text-gray-300" data-i18n="overviewCard2Text">Fired heaters are the largest energy consumers in refineries. A 1% efficiency improvement on a large heater can save millions annually while reducing emissions and enhancing safety.</p>
                     </div>
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md card-elevated">
                         <div class="text-4xl mb-4 text-center">📊</div>
-                        <h3 class="text-xl font-semibold mb-3">How to Optimize</h3>
-                        <p class="text-gray-600 dark:text-gray-300">Through precise measurement using API-560 standards, minimizing stack losses, reducing excess air, and implementing advanced control systems for real-time optimization.</p>
+                        <h3 class="text-xl font-semibold mb-3" data-i18n="overviewCard3Title">How to Optimize</h3>
+                        <p class="text-gray-600 dark:text-gray-300" data-i18n="overviewCard3Text">Through precise measurement using API-560 standards, minimizing stack losses, reducing excess air, and implementing advanced control systems for real-time optimization.</p>
                     </div>
                 </div>
             </div>
@@ -175,74 +267,55 @@
         <!-- API-560 Method Section -->
         <section id="api-560" class="section-padding">
             <div class="container-max">
-                <h2 class="text-3xl font-bold mb-8 text-center">API-560 in 5 Steps</h2>
+                <h2 class="text-3xl font-bold mb-8 text-center" data-i18n="apiTitle">API-560 in 5 Steps</h2>
                 <div class="flex flex-wrap justify-center items-center space-x-4 mb-12">
                     <div class="stepper-step tooltip flex items-center justify-center w-12 h-12 bg-gray-300 text-gray-700 rounded-full font-semibold mb-4 sm:mb-0" data-step="1">
                         1
-                        <span class="tooltiptext">Collect operational data: temperatures, oxygen levels, fuel composition, and humidity under steady-state conditions</span>
+                        <span class="tooltiptext" data-i18n="apiStep1">Collect operational data: temperatures, oxygen levels, fuel composition, and humidity under steady-state conditions</span>
                     </div>
                     <div class="hidden sm:block w-8 h-1 bg-gray-300"></div>
                     <div class="stepper-step tooltip flex items-center justify-center w-12 h-12 bg-gray-300 text-gray-700 rounded-full font-semibold mb-4 sm:mb-0" data-step="2">
                         2
-                        <span class="tooltiptext">Complete combustion worksheet using fuel composition to calculate stoichiometric parameters and heat release</span>
+                        <span class="tooltiptext" data-i18n="apiStep2">Complete combustion worksheet using fuel composition to calculate stoichiometric parameters and heat release</span>
                     </div>
                     <div class="hidden sm:block w-8 h-1 bg-gray-300"></div>
                     <div class="stepper-step tooltip flex items-center justify-center w-12 h-12 bg-gray-300 text-gray-700 rounded-full font-semibold mb-4 sm:mb-0" data-step="3">
                         3
-                        <span class="tooltiptext">Calculate excess air from oxygen measurements and determine all sensible heat credits from preheated inputs</span>
+                        <span class="tooltiptext" data-i18n="apiStep3">Calculate excess air from oxygen measurements and determine all sensible heat credits from preheated inputs</span>
                     </div>
                     <div class="hidden sm:block w-8 h-1 bg-gray-300"></div>
                     <div class="stepper-step tooltip flex items-center justify-center w-12 h-12 bg-gray-300 text-gray-700 rounded-full font-semibold mb-4 sm:mb-0" data-step="4">
                         4
-                        <span class="tooltiptext">Quantify heat losses: stack loss (largest), radiation loss, and incomplete combustion losses</span>
+                        <span class="tooltiptext" data-i18n="apiStep4">Quantify heat losses: stack loss (largest), radiation loss, and incomplete combustion losses</span>
                     </div>
                     <div class="hidden sm:block w-8 h-1 bg-gray-300"></div>
                     <div class="stepper-step tooltip flex items-center justify-center w-12 h-12 bg-gray-300 text-gray-700 rounded-full font-semibold mb-4 sm:mb-0" data-step="5">
                         5
-                        <span class="tooltiptext">Apply final efficiency formulas: thermal efficiency and fuel efficiency calculations based on energy balance</span>
+                        <span class="tooltiptext" data-i18n="apiStep5">Apply final efficiency formulas: thermal efficiency and fuel efficiency calculations based on energy balance</span>
                     </div>
                 </div>
 
                 <!-- Key Losses Visual -->
-                <h3 class="text-2xl font-semibold mb-6 text-center">Key Energy Losses</h3>
+                <h3 class="text-2xl font-semibold mb-6 text-center" data-i18n="keyLossesTitle">Key Energy Losses</h3>
                 <div class="grid md:grid-cols-3 gap-6 mb-12">
                     <div class="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg border-l-4 border-red-500">
-                        <h4 class="text-lg font-semibold text-red-700 dark:text-red-400 mb-2">Stack Loss (60-85%)</h4>
-                        <p class="text-gray-600 dark:text-gray-300">Heat carried away by hot flue gases. Controlled by reducing stack temperature and minimizing excess air.</p>
+                        <h4 class="text-lg font-semibold text-red-700 dark:text-red-400 mb-2" data-i18n="keyLossesCard1Title">Stack Loss (60-85%)</h4>
+                        <p class="text-gray-600 dark:text-gray-300" data-i18n="keyLossesCard1Text">Heat carried away by hot flue gases. Controlled by reducing stack temperature and minimizing excess air.</p>
                     </div>
                     <div class="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border-l-4 border-orange-500">
-                        <h4 class="text-lg font-semibold text-orange-700 dark:text-orange-400 mb-2">Setting Loss (1.5-2.5%)</h4>
-                        <p class="text-gray-600 dark:text-gray-300">Heat lost through external surfaces via radiation and convection. Indicates refractory condition.</p>
+                        <h4 class="text-lg font-semibold text-orange-700 dark:text-orange-400 mb-2" data-i18n="keyLossesCard2Title">Setting Loss (1.5-2.5%)</h4>
+                        <p class="text-gray-600 dark:text-gray-300" data-i18n="keyLossesCard2Text">Heat lost through external surfaces via radiation and convection. Indicates refractory condition.</p>
                     </div>
                     <div class="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg border-l-4 border-yellow-500">
-                        <h4 class="text-lg font-semibold text-yellow-700 dark:text-yellow-400 mb-2">Incomplete Combustion (~0%)</h4>
-                        <p class="text-gray-600 dark:text-gray-300">Energy lost due to unburned fuel (CO, hydrocarbons). Should be negligible in well-operated heaters.</p>
+                        <h4 class="text-lg font-semibold text-yellow-700 dark:text-yellow-400 mb-2" data-i18n="keyLossesCard3Title">Incomplete Combustion (~0%)</h4>
+                        <p class="text-gray-600 dark:text-gray-300" data-i18n="keyLossesCard3Text">Energy lost due to unburned fuel (CO, hydrocarbons). Should be negligible in well-operated heaters.</p>
                     </div>
                 </div>
 
                 <!-- Mermaid Flowchart -->
-                <h3 class="text-2xl font-semibold mb-6 text-center">Annex G Workflow</h3>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                    <div id="mermaidChart" class="mermaid text-center">
-                        flowchart TD
-                            A[Start: Steady-State Operation] --> B[Collect Operational Data]
-                            B --> C[Fuel Analysis & Composition]
-                            C --> D[Complete Combustion Worksheet]
-                            D --> E[Calculate Excess Air from O₂]
-                            E --> F[Determine Heat Credits]
-                            F --> G[Calculate Stack Loss]
-                            G --> H[Calculate Radiation Loss]
-                            H --> I[Apply Efficiency Formulas]
-                            I --> J[Final Efficiency Values]
-
-                            B --> B1[Temperature Measurements]
-                            B --> B2[Flue Gas O₂ & Composition]
-                            B --> B3[Ambient Conditions]
-
-                            style A fill:#e1f5fe
-                            style J fill:#c8e6c9
-                            style G fill:#ffcdd2
-                    </div>
+                <h3 class="text-2xl font-semibold mb-6 text-center" data-i18n="workflowTitle">Annex G Workflow</h3>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md card-elevated">
+                    <div id="mermaidChart" class="mermaid text-center"></div>
                 </div>
             </div>
         </section>
@@ -250,86 +323,88 @@
         <!-- Interactive Widgets Section -->
         <section id="interactive" class="section-padding bg-gray-50 dark:bg-gray-800">
             <div class="container-max">
-                <h2 class="text-3xl font-bold mb-8 text-center">Interactive Efficiency Tools</h2>
+                <h2 class="text-3xl font-bold mb-8 text-center" data-i18n="interactiveTitle">Interactive Efficiency Tools</h2>
 
                 <!-- Excess Air vs Efficiency Widget -->
                 <div class="grid lg:grid-cols-2 gap-8 mb-12">
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-semibold mb-4">Excess Air vs. Efficiency</h3>
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md card-elevated">
+                        <h3 class="text-xl font-semibold mb-4" data-i18n="excessAirCardTitle">Excess Air vs. Efficiency</h3>
                         <div class="slider-container mb-4">
-                            <label for="excessAirSlider" class="block text-sm font-medium mb-2">Excess Air: <span id="excessAirValue">15</span>%</label>
+                            <label for="excessAirSlider" class="block text-sm font-medium mb-2"><span data-i18n="excessAirLabel">Excess Air</span>: <span id="excessAirValue">15</span>%</label>
                             <input type="range" id="excessAirSlider" min="0" max="50" value="15" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer">
                         </div>
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
-                                <span class="text-sm">Estimated Efficiency:</span>
+                                <span class="text-sm" data-i18n="estimatedEfficiency">Estimated Efficiency:</span>
                                 <span id="efficiencyValue" class="font-semibold text-lg text-green-600">87.5%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-4">
                                 <div id="stackLossBar" class="bg-red-500 h-4 rounded-full transition-all duration-300" style="width: 12.5%"></div>
                             </div>
-                            <div class="text-xs text-gray-600 dark:text-gray-400 text-center">Stack Loss: <span id="stackLossValue">12.5%</span></div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400 text-center">
+                                <span data-i18n="stackLossLabel">Stack Loss</span>: <span id="stackLossValue">12.5%</span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Stack Temperature Impact Widget -->
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-semibold mb-4">Stack Temperature Impact</h3>
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md card-elevated">
+                        <h3 class="text-xl font-semibold mb-4" data-i18n="stackTempCardTitle">Stack Temperature Impact</h3>
                         <div class="slider-container mb-4">
-                            <label for="stackTempSlider" class="block text-sm font-medium mb-2">Stack Temperature: <span id="stackTempValue">300</span>°C</label>
+                            <label for="stackTempSlider" class="block text-sm font-medium mb-2"><span data-i18n="stackTempLabel">Stack Temperature</span>: <span id="stackTempValue">300</span>°C</label>
                             <input type="range" id="stackTempSlider" min="200" max="450" value="300" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer">
                         </div>
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
-                                <span class="text-sm">Temperature Loss:</span>
+                                <span class="text-sm" data-i18n="temperatureLoss">Temperature Loss:</span>
                                 <span id="tempLossValue" class="font-semibold text-lg text-orange-600">8.2%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-4">
                                 <div id="tempLossBar" class="bg-orange-500 h-4 rounded-full transition-all duration-300" style="width: 8.2%"></div>
                             </div>
-                            <div class="text-xs text-gray-600 dark:text-gray-400">Optimal range: 200-320°C</div>
+                            <div class="text-xs text-gray-600 dark:text-gray-400" data-i18n="optimalRange">Optimal range: 200-320°C</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Checklist Widget -->
-                <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
-                    <h3 class="text-xl font-semibold mb-4">Efficiency Test Checklist</h3>
+                <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md card-elevated">
+                    <h3 class="text-xl font-semibold mb-4" data-i18n="checklistTitle">Efficiency Test Checklist</h3>
                     <div class="grid md:grid-cols-2 gap-4">
                         <div class="space-y-3">
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checklist-item form-checkbox h-5 w-5 text-blue-600" data-item="steady-state">
-                                <span class="text-sm">Achieve steady-state operation (2+ hours)</span>
+                                <span class="text-sm" data-i18n="checklistItem1">Achieve steady-state operation (2+ hours)</span>
                             </label>
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checklist-item form-checkbox h-5 w-5 text-blue-600" data-item="calibration">
-                                <span class="text-sm">Verify instrument calibration</span>
+                                <span class="text-sm" data-i18n="checklistItem2">Verify instrument calibration</span>
                             </label>
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checklist-item form-checkbox h-5 w-5 text-blue-600" data-item="fuel-analysis">
-                                <span class="text-sm">Obtain representative fuel analysis</span>
+                                <span class="text-sm" data-i18n="checklistItem3">Obtain representative fuel analysis</span>
                             </label>
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checklist-item form-checkbox h-5 w-5 text-blue-600" data-item="probe-location">
-                                <span class="text-sm">Verify flue gas probe location</span>
+                                <span class="text-sm" data-i18n="checklistItem4">Verify flue gas probe location</span>
                             </label>
                         </div>
                         <div class="space-y-3">
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checklist-item form-checkbox h-5 w-5 text-blue-600" data-item="air-leaks">
-                                <span class="text-sm">Check for air leaks/seal openings</span>
+                                <span class="text-sm" data-i18n="checklistItem5">Check for air leaks/seal openings</span>
                             </label>
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checklist-item form-checkbox h-5 w-5 text-blue-600" data-item="ambient-conditions">
-                                <span class="text-sm">Record ambient conditions</span>
+                                <span class="text-sm" data-i18n="checklistItem6">Record ambient conditions</span>
                             </label>
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checklist-item form-checkbox h-5 w-5 text-blue-600" data-item="temperature-grid">
-                                <span class="text-sm">Use temperature measurement grid</span>
+                                <span class="text-sm" data-i18n="checklistItem7">Use temperature measurement grid</span>
                             </label>
                             <label class="flex items-center space-x-3 cursor-pointer">
                                 <input type="checkbox" class="checklist-item form-checkbox h-5 w-5 text-blue-600" data-item="documentation">
-                                <span class="text-sm">Document all measurements</span>
+                                <span class="text-sm" data-i18n="checklistItem8">Document all measurements</span>
                             </label>
                         </div>
                     </div>
@@ -340,60 +415,60 @@
         <!-- Measurements Section -->
         <section id="measurements" class="section-padding">
             <div class="container-max">
-                <h2 class="text-3xl font-bold mb-8">Instrumentation and Measurement</h2>
+                <h2 class="text-3xl font-bold mb-8" data-i18n="measurementsTitle">Instrumentation and Measurement</h2>
 
                 <!-- Required Inputs Table -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-8">
                     <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                        <h3 class="text-lg font-semibold">Required Input Parameters</h3>
+                        <h3 class="text-lg font-semibold" data-i18n="inputsTitle">Required Input Parameters</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Parameter</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Symbol</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Units</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Measurement Method</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" data-i18n="parameterColumn">Parameter</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" data-i18n="symbolColumn">Symbol</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" data-i18n="unitsColumn">Units</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" data-i18n="methodColumn">Measurement Method</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">Ambient Air Temperature</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">Ta</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">°C / °F</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">Calibrated thermometer, shielded from radiation</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">Relative Humidity</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">RH</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">%</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">Sling psychrometer or electronic sensor</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">Flue Gas Exit Temperature</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">Te</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">°C / °F</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">Multi-point traverse or thermocouple grid</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">Flue Gas Oxygen</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">O₂</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">vol %</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">Zirconia oxide or electrochemical analyzer</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">Fuel Composition</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">-</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">vol % / mass %</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">Gas chromatograph analysis</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">Lower Heating Value</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">LHV</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">kJ/kg</td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300">Calculated from composition or calorimetry</td>
-                                </tr>
+                                  <tr>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" data-i18n="ambientAir">Ambient Air Temperature</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">Ta</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">°C / °F</td>
+                                      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300" data-i18n="ambientMethod">Calibrated thermometer, shielded from radiation</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" data-i18n="relativeHumidity">Relative Humidity</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">RH</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">%</td>
+                                      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300" data-i18n="humidityMethod">Sling psychrometer or electronic sensor</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" data-i18n="flueExitTemp">Flue Gas Exit Temperature</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">Te</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">°C / °F</td>
+                                      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300" data-i18n="flueExitMethod">Multi-point traverse or thermocouple grid</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" data-i18n="flueGasOxygen">Flue Gas Oxygen</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">O₂</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">vol %</td>
+                                      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300" data-i18n="flueGasMethod">Zirconia oxide or electrochemical analyzer</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" data-i18n="fuelComposition">Fuel Composition</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">-</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">vol % / mass %</td>
+                                      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300" data-i18n="fuelMethod">Gas chromatograph analysis</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" data-i18n="lowerHeatingValue">Lower Heating Value</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">LHV</td>
+                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">kJ/kg</td>
+                                      <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-300" data-i18n="lhvMethod">Calculated from composition or calorimetry</td>
+                                  </tr>
                             </tbody>
                         </table>
                     </div>
@@ -402,25 +477,25 @@
                 <!-- Best Practices -->
                 <div class="grid md:grid-cols-2 gap-8">
                     <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
-                        <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-400 mb-4">✅ Best Practices</h3>
+                        <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-400 mb-4" data-i18n="bestPracticesTitle">✅ Best Practices</h3>
                         <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            <li>• Place probes downstream of final heat transfer surface</li>
-                            <li>• Sample in central third of duct cross-section</li>
-                            <li>• Use EPA Method 1 for large duct traverses</li>
-                            <li>• Co-locate O₂ and temperature sensors</li>
-                            <li>• Calibrate instruments before each test</li>
-                            <li>• Seal all test ports during measurement</li>
+                            <li data-i18n="bestPractice1">• Place probes downstream of final heat transfer surface</li>
+                            <li data-i18n="bestPractice2">• Sample in central third of duct cross-section</li>
+                            <li data-i18n="bestPractice3">• Use EPA Method 1 for large duct traverses</li>
+                            <li data-i18n="bestPractice4">• Co-locate O₂ and temperature sensors</li>
+                            <li data-i18n="bestPractice5">• Calibrate instruments before each test</li>
+                            <li data-i18n="bestPractice6">• Seal all test ports during measurement</li>
                         </ul>
                     </div>
                     <div class="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg">
-                        <h3 class="text-lg font-semibold text-red-800 dark:text-red-400 mb-4">❌ Common Errors</h3>
+                        <h3 class="text-lg font-semibold text-red-800 dark:text-red-400 mb-4" data-i18n="commonErrorsTitle">❌ Common Errors</h3>
                         <ul class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                            <li>• Sampling upstream of air leaks (tramp air)</li>
-                            <li>• Single-point measurement in stratified flow</li>
-                            <li>• Uncalibrated or drifting instruments</li>
-                            <li>• Non-representative fuel samples</li>
-                            <li>• Ignoring humidity in air calculations</li>
-                            <li>• Operating during transient conditions</li>
+                            <li data-i18n="commonError1">• Sampling upstream of air leaks (tramp air)</li>
+                            <li data-i18n="commonError2">• Single-point measurement in stratified flow</li>
+                            <li data-i18n="commonError3">• Uncalibrated or drifting instruments</li>
+                            <li data-i18n="commonError4">• Non-representative fuel samples</li>
+                            <li data-i18n="commonError5">• Ignoring humidity in air calculations</li>
+                            <li data-i18n="commonError6">• Operating during transient conditions</li>
                         </ul>
                     </div>
                 </div>
@@ -430,11 +505,11 @@
         <!-- Complex Configurations Section -->
         <section id="configurations" class="section-padding bg-gray-50 dark:bg-gray-800">
             <div class="container-max">
-                <h2 class="text-3xl font-bold mb-8">Complex Heater Configurations</h2>
+                <h2 class="text-3xl font-bold mb-8" data-i18n="configTitle">Complex Heater Configurations</h2>
 
                 <div class="grid lg:grid-cols-2 gap-8">
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-semibold mb-4">Multi-Cell with Common Convection</h3>
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md card-elevated">
+                        <h3 class="text-xl font-semibold mb-4" data-i18n="multiCellTitle">Multi-Cell with Common Convection</h3>
                         <div class="mb-4">
                             <svg class="w-full h-48" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="50" y="80" width="80" height="60" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="2"/>
@@ -454,14 +529,14 @@
                                 </defs>
                             </svg>
                         </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Multiple radiant cells sharing a common convection section. Overall efficiency calculated from single stack measurement, but cell-specific monitoring required for control.</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4" data-i18n="multiCellText">Multiple radiant cells sharing a common convection section. Overall efficiency calculated from single stack measurement, but cell-specific monitoring required for control.</p>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                            <strong>Key Challenge:</strong> Individual cell performance masked in overall measurement
+                            <strong data-i18n="keyChallengeLabel">Key Challenge:</strong> <span data-i18n="keyChallengeText">Individual cell performance masked in overall measurement</span>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
-                        <h3 class="text-xl font-semibold mb-4">Independent Heaters, Common Stack</h3>
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md card-elevated">
+                        <h3 class="text-xl font-semibold mb-4" data-i18n="independentTitle">Independent Heaters, Common Stack</h3>
                         <div class="mb-4">
                             <svg class="w-full h-48" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
                                 <rect x="50" y="100" width="60" height="80" fill="currentColor" fill-opacity="0.1" stroke="currentColor" stroke-width="2"/>
@@ -482,16 +557,16 @@
                                 </defs>
                             </svg>
                         </div>
-                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Independent heaters with separate process services sharing a common stack. Each heater requires individual flue gas measurement for meaningful performance monitoring.</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4" data-i18n="independentText">Independent heaters with separate process services sharing a common stack. Each heater requires individual flue gas measurement for meaningful performance monitoring.</p>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                            <strong>Key Requirement:</strong> Individual O₂ and temperature measurement before gas streams combine
+                            <strong data-i18n="keyRequirementLabel">Key Requirement:</strong> <span data-i18n="keyRequirementText">Individual O₂ and temperature measurement before gas streams combine</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="mt-8 bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg border-l-4 border-yellow-500">
-                    <h4 class="text-lg font-semibold text-yellow-800 dark:text-yellow-400 mb-2">⚠️ Measurement Strategy</h4>
-                    <p class="text-gray-700 dark:text-gray-300">For complex configurations, the "black box" API-560 approach is insufficient for diagnostics and control. Use process simulators (Aspen HYSYS) or CFD (OpenFOAM) for detailed analysis of internal behavior and optimization opportunities.</p>
+                    <h4 class="text-lg font-semibold text-yellow-800 dark:text-yellow-400 mb-2" data-i18n="measurementStrategyTitle">⚠️ Measurement Strategy</h4>
+                    <p class="text-gray-700 dark:text-gray-300" data-i18n="measurementStrategyText">For complex configurations, the "black box" API-560 approach is insufficient for diagnostics and control. Use process simulators (Aspen HYSYS) or CFD (OpenFOAM) for detailed analysis of internal behavior and optimization opportunities.</p>
                 </div>
             </div>
         </section>
@@ -499,24 +574,24 @@
         <!-- Examples Section -->
         <section id="examples" class="section-padding">
             <div class="container-max">
-                <h2 class="text-3xl font-bold mb-8">Example Calculations & Sensitivity Analysis</h2>
+                <h2 class="text-3xl font-bold mb-8" data-i18n="examplesTitle">Example Calculations & Sensitivity Analysis</h2>
 
                 <!-- Combustion Worksheet Example -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-8">
                     <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                        <h3 class="text-lg font-semibold">API-560 Combustion Worksheet (Sample)</h3>
+                        <h3 class="text-lg font-semibold" data-i18n="combustionTitle">API-560 Combustion Worksheet (Sample)</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Component</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Vol %</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Mol. Wt.</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Mass Fraction</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">LHV (kJ/kg)</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">LHV Contrib.</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Stoich. Air</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="componentColumn">Component</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="volColumn">Vol %</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="molColumn">Mol. Wt.</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="massFractionColumn">Mass Fraction</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="lhvColumn">LHV (kJ/kg)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="lhvContributionColumn">LHV Contrib.</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="stoichColumn">Stoich. Air</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
@@ -571,12 +646,12 @@
                 </div>
 
                 <!-- Sensitivity Analysis Chart -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-                    <h3 class="text-lg font-semibold mb-4">Sensitivity Analysis: Stack Temperature vs. Efficiency</h3>
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md card-elevated">
+                    <h3 class="text-lg font-semibold mb-4" data-i18n="chartTitle">Sensitivity Analysis: Stack Temperature vs. Efficiency</h3>
                     <div class="h-64">
                         <canvas id="sensitivityChart"></canvas>
                     </div>
-                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-4">This chart shows how efficiency decreases with increasing stack temperature. A 50°C increase from 300°C to 350°C typically reduces efficiency by 2-3 percentage points.</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mt-4" data-i18n="chartDescription">This chart shows how efficiency decreases with increasing stack temperature. A 50°C increase from 300°C to 350°C typically reduces efficiency by 2-3 percentage points.</p>
                 </div>
             </div>
         </section>
@@ -584,90 +659,90 @@
         <!-- Tools & Downloads Section -->
         <section id="tools" class="section-padding bg-gray-50 dark:bg-gray-800">
             <div class="container-max">
-                <h2 class="text-3xl font-bold mb-8 text-center">Tools & Downloads</h2>
+                <h2 class="text-3xl font-bold mb-8 text-center" data-i18n="toolsTitle">Tools & Downloads</h2>
 
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <!-- Download Report Button -->
                     <div class="lg:col-span-3 flex justify-center mb-8">
-                        <a href="./Fired Heater Efficiency Calculation Methods.md" download class="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 text-lg">
+                        <a href="./Fired Heater Efficiency Calculation Methods.md" download class="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md transition-colors duration-200 text-lg" data-i18n="downloadReport">
                             📄 Download the Full Report (.md)
                         </a>
                     </div>
 
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md text-center">
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md text-center card-elevated">
                         <div class="text-3xl mb-4">📊</div>
-                        <h3 class="text-lg font-semibold mb-2">Excel Template</h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">API-560 Annex G calculation spreadsheet with built-in formulas and validation.</p>
-                        <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors" onclick="alert('Template would be available for download in a real implementation')">Download</button>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="excelTitle">Excel Template</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4" data-i18n="excelDescription">API-560 Annex G calculation spreadsheet with built-in formulas and validation.</p>
+                        <button class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors" type="button" data-i18n="excelButton" data-alert-key="templateAlert">Download</button>
                     </div>
 
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md text-center">
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md text-center card-elevated">
                         <div class="text-3xl mb-4">🐍</div>
-                        <h3 class="text-lg font-semibold mb-2">Python Library</h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Open-source library for automated efficiency calculations and sensitivity analysis.</p>
-                        <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors" onclick="alert('Library would be available for download in a real implementation')">GitHub</button>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="pythonTitle">Python Library</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4" data-i18n="pythonDescription">Open-source library for automated efficiency calculations and sensitivity analysis.</p>
+                        <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors" type="button" data-i18n="pythonButton" data-alert-key="libraryAlert">GitHub</button>
                     </div>
 
-                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md text-center">
+                    <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md text-center card-elevated">
                         <div class="text-3xl mb-4">📱</div>
-                        <h3 class="text-lg font-semibold mb-2">Mobile Calculator</h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Quick efficiency estimates and excess air calculations for field use.</p>
-                        <button class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors" onclick="alert('Mobile app would be available for download in a real implementation')">App Store</button>
+                        <h3 class="text-lg font-semibold mb-2" data-i18n="mobileTitle">Mobile Calculator</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-4" data-i18n="mobileDescription">Quick efficiency estimates and excess air calculations for field use.</p>
+                        <button class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors" type="button" data-i18n="mobileButton" data-alert-key="mobileAlert">App Store</button>
                     </div>
                 </div>
 
                 <!-- Software Comparison -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                     <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                        <h3 class="text-lg font-semibold">Software Comparison Matrix</h3>
+                        <h3 class="text-lg font-semibold" data-i18n="softwareTitle">Software Comparison Matrix</h3>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Tool</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Cost</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Expertise</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Accuracy</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Best For</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="softwareColumnTool">Tool</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="softwareColumnCost">Cost</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="softwareColumnExpertise">Expertise</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="softwareColumnAccuracy">Accuracy</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="softwareColumnBestFor">Best For</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-600">
-                                <tr>
-                                    <td class="px-4 py-4 font-medium">Excel Spreadsheet</td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Low</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">Medium</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">High</span></td>
-                                    <td class="px-4 py-4">API-560 calculations, custom reporting</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-4 py-4 font-medium">HeaterSIM</td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">High</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">High</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Very High</span></td>
-                                    <td class="px-4 py-4">Detailed design, thermal modeling</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-4 py-4 font-medium">Aspen HYSYS</td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">Very High</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">High</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">High</span></td>
-                                    <td class="px-4 py-4">Plant-wide simulation, integration</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-4 py-4 font-medium">Python/MATLAB</td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Low</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">High</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">High</span></td>
-                                    <td class="px-4 py-4">Automation, sensitivity analysis</td>
-                                </tr>
-                                <tr>
-                                    <td class="px-4 py-4 font-medium">Online Calculators</td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Free</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">Low</span></td>
-                                    <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">Low</span></td>
-                                    <td class="px-4 py-4">Quick estimates, education</td>
-                                </tr>
+                                  <tr>
+                                      <td class="px-4 py-4 font-medium" data-i18n="softwareExcel">Excel Spreadsheet</td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs" data-i18n="costLow">Low</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs" data-i18n="expertiseMedium">Medium</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs" data-i18n="accuracyHigh">High</span></td>
+                                      <td class="px-4 py-4" data-i18n="softwareExcelBest">API-560 calculations, custom reporting</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-4 py-4 font-medium" data-i18n="softwareHeaterSim">HeaterSIM</td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs" data-i18n="costHigh">High</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs" data-i18n="expertiseHigh">High</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs" data-i18n="accuracyVeryHigh">Very High</span></td>
+                                      <td class="px-4 py-4" data-i18n="softwareHeaterSimBest">Detailed design, thermal modeling</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-4 py-4 font-medium" data-i18n="softwareAspen">Aspen HYSYS</td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs" data-i18n="costVeryHigh">Very High</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs" data-i18n="expertiseHigh">High</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs" data-i18n="accuracyHigh">High</span></td>
+                                      <td class="px-4 py-4" data-i18n="softwareAspenBest">Plant-wide simulation, integration</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-4 py-4 font-medium" data-i18n="softwarePython">Python/MATLAB</td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs" data-i18n="costLow">Low</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs" data-i18n="expertiseHigh">High</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs" data-i18n="accuracyHigh">High</span></td>
+                                      <td class="px-4 py-4" data-i18n="softwarePythonBest">Automation, sensitivity analysis</td>
+                                  </tr>
+                                  <tr>
+                                      <td class="px-4 py-4 font-medium" data-i18n="softwareOnline">Online Calculators</td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs" data-i18n="costFree">Free</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs" data-i18n="expertiseLow">Low</span></td>
+                                      <td class="px-4 py-4"><span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs" data-i18n="accuracyLow">Low</span></td>
+                                      <td class="px-4 py-4" data-i18n="softwareOnlineBest">Quick estimates, education</td>
+                                  </tr>
                             </tbody>
                         </table>
                     </div>
@@ -678,76 +753,76 @@
         <!-- FAQ Section -->
         <section id="faq" class="section-padding">
             <div class="container-max">
-                <h2 class="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
+                <h2 class="text-3xl font-bold mb-8 text-center" data-i18n="faqTitle">Frequently Asked Questions</h2>
 
                 <div class="space-y-6">
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq1">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-lg font-semibold">Why use LHV instead of HHV for fired heater efficiency?</h3>
+                                <h3 class="text-lg font-semibold" data-i18n="faqQ1">Why use LHV instead of HHV for fired heater efficiency?</h3>
                                 <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </div>
                         </button>
                         <div id="faq1" class="faq-answer hidden px-6 py-4">
-                            <p class="text-gray-600 dark:text-gray-300">API-560 mandates LHV because fired heater stack temperatures (300-450°C) are well above water's dew point. The water vapor from combustion never condenses, so its latent heat is never recovered. LHV provides a realistic measure of usable energy, while HHV assumes latent heat recovery that doesn't occur in practice.</p>
+                            <p class="text-gray-600 dark:text-gray-300" data-i18n="faqA1">API-560 mandates LHV because fired heater stack temperatures (300-450°C) are well above water's dew point. The water vapor from combustion never condenses, so its latent heat is never recovered. LHV provides a realistic measure of usable energy, while HHV assumes latent heat recovery that doesn't occur in practice.</p>
                         </div>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq2">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-lg font-semibold">What's the biggest source of efficiency loss in fired heaters?</h3>
+                                <h3 class="text-lg font-semibold" data-i18n="faqQ2">What's the biggest source of efficiency loss in fired heaters?</h3>
                                 <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </div>
                         </button>
                         <div id="faq2" class="faq-answer hidden px-6 py-4">
-                            <p class="text-gray-600 dark:text-gray-300">Stack loss is by far the largest efficiency loss, typically 60-85% of total losses. It's controlled by two main factors: stack temperature (lower is better) and excess air (minimize while maintaining complete combustion). A 50°C reduction in stack temperature can improve efficiency by 2-3 percentage points.</p>
+                            <p class="text-gray-600 dark:text-gray-300" data-i18n="faqA2">Stack loss is by far the largest efficiency loss, typically 60-85% of total losses. It's controlled by two main factors: stack temperature (lower is better) and excess air (minimize while maintaining complete combustion). A 50°C reduction in stack temperature can improve efficiency by 2-3 percentage points.</p>
                         </div>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq3">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-lg font-semibold">How accurate do flue gas measurements need to be?</h3>
+                                <h3 class="text-lg font-semibold" data-i18n="faqQ3">How accurate do flue gas measurements need to be?</h3>
                                 <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </div>
                         </button>
                         <div id="faq3" class="faq-answer hidden px-6 py-4">
-                            <p class="text-gray-600 dark:text-gray-300">Very accurate. A 5°C error in stack temperature measurement can cause a 0.5% error in calculated efficiency. Oxygen measurements should be accurate to ±0.1% for meaningful results. This is why proper calibration, representative sampling locations, and accounting for stratification in large ducts are critical.</p>
+                            <p class="text-gray-600 dark:text-gray-300" data-i18n="faqA3">Very accurate. A 5°C error in stack temperature measurement can cause a 0.5% error in calculated efficiency. Oxygen measurements should be accurate to ±0.1% for meaningful results. This is why proper calibration, representative sampling locations, and accounting for stratification in large ducts are critical.</p>
                         </div>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq4">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-lg font-semibold">Can I use API-560 for multi-cell heaters?</h3>
+                                <h3 class="text-lg font-semibold" data-i18n="faqQ4">Can I use API-560 for multi-cell heaters?</h3>
                                 <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </div>
                         </button>
                         <div id="faq4" class="faq-answer hidden px-6 py-4">
-                            <p class="text-gray-600 dark:text-gray-300">Yes, for overall efficiency. Treat the entire system as one unit with aggregated fuel inputs and a single measurement at the common stack. However, this provides no insight into individual cell performance. For control and diagnostics, each cell needs its own measurements before gas streams combine.</p>
+                            <p class="text-gray-600 dark:text-gray-300" data-i18n="faqA4">Yes, for overall efficiency. Treat the entire system as one unit with aggregated fuel inputs and a single measurement at the common stack. However, this provides no insight into individual cell performance. For control and diagnostics, each cell needs its own measurements before gas streams combine.</p>
                         </div>
                     </div>
 
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq5">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-lg font-semibold">What's the difference between thermal and fuel efficiency?</h3>
+                                <h3 class="text-lg font-semibold" data-i18n="faqQ5">What's the difference between thermal and fuel efficiency?</h3>
                                 <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </div>
                         </button>
                         <div id="faq5" class="faq-answer hidden px-6 py-4">
-                            <p class="text-gray-600 dark:text-gray-300">Fuel efficiency measures useful heat absorbed vs. fuel heat input only. Thermal efficiency includes all heat inputs (fuel + preheated air + heated fuel). For economic analysis, fuel efficiency is more relevant as it directly relates to fuel costs. Thermal efficiency better represents overall system performance when air preheaters are installed.</p>
+                            <p class="text-gray-600 dark:text-gray-300" data-i18n="faqA5">Fuel efficiency measures useful heat absorbed vs. fuel heat input only. Thermal efficiency includes all heat inputs (fuel + preheated air + heated fuel). For economic analysis, fuel efficiency is more relevant as it directly relates to fuel costs. Thermal efficiency better represents overall system performance when air preheaters are installed.</p>
                         </div>
                     </div>
                 </div>
@@ -758,278 +833,13 @@
     <!-- Footer -->
     <footer class="bg-gray-900 text-white section-padding">
         <div class="container-max text-center">
-            <p class="text-lg mb-4">Made by Ahmed Sabri with the help of AI</p>
-            <p class="text-gray-400 text-sm">This site provides educational content on fired heater efficiency calculations using API-560 standards.</p>
+            <p class="text-lg mb-4" data-i18n="footerCredit">Made by Ahmed Sabri with the help of AI</p>
+            <p class="text-gray-400 text-sm" data-i18n="footerDescription">This site provides educational content on fired heater efficiency calculations using API-560 standards.</p>
         </div>
     </footer>
 
     <!-- JavaScript -->
-    <script defer>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Dark mode toggle
-            const darkModeToggle = document.getElementById('darkModeToggle');
-            const html = document.documentElement;
+    <script defer src="assets/js/main.js"></script>
 
-            const darkMode = localStorage.getItem('darkMode') === 'true';
-            if (darkMode) {
-                html.classList.add('dark');
-                darkModeToggle.textContent = '☀️ Light Mode';
-            }
-
-            darkModeToggle.addEventListener('click', () => {
-                html.classList.toggle('dark');
-                const isDark = html.classList.contains('dark');
-                localStorage.setItem('darkMode', isDark);
-                darkModeToggle.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
-            });
-
-            // Mobile menu toggle
-            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            const mobileMenu = document.getElementById('mobileMenu');
-
-            mobileMenuToggle.addEventListener('click', () => {
-                mobileMenu.classList.toggle('hidden');
-            });
-
-            // Close mobile menu when clicking nav links
-            document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                link.addEventListener('click', () => {
-                    mobileMenu.classList.add('hidden');
-                });
-            });
-
-            // TOC sidebar toggle
-            const tocButton = document.getElementById('tocButton');
-            const tocSidebar = document.getElementById('tocSidebar');
-            const tocToggle = document.getElementById('tocToggle');
-
-            const showTOC = () => {
-                tocSidebar.classList.remove('-translate-x-full');
-                tocSidebar.classList.add('translate-x-0');
-            };
-
-            const hideTOC = () => {
-                tocSidebar.classList.add('-translate-x-full');
-                tocSidebar.classList.remove('translate-x-0');
-            };
-
-            tocButton.addEventListener('click', showTOC);
-            tocToggle.addEventListener('click', hideTOC);
-
-            // Generate TOC
-            const tocNav = document.getElementById('tocNav');
-            const headings = document.querySelectorAll('h2, h3');
-
-            headings.forEach((heading, index) => {
-                if (!heading.id) {
-                    heading.id = `heading-${index}`;
-                }
-
-                const link = document.createElement('a');
-                link.href = `#${heading.id}`;
-                link.textContent = heading.textContent;
-                link.className = `block py-2 px-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors ${
-                    heading.tagName === 'H2' ? 'font-semibold' : 'ml-4 text-gray-600 dark:text-gray-300'
-                }`;
-
-                link.addEventListener('click', () => {
-                    hideTOC();
-                });
-
-                tocNav.appendChild(link);
-            });
-
-            // Smooth scrolling for navigation links
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'start'
-                        });
-                    }
-                });
-            });
-
-            // Active navigation highlighting
-            const navLinks = document.querySelectorAll('.nav-link');
-            const sections = document.querySelectorAll('section[id]');
-
-            function highlightActiveSection() {
-                let current = '';
-                sections.forEach(section => {
-                    const sectionTop = section.offsetTop - 100;
-                    if (pageYOffset >= sectionTop) {
-                        current = section.getAttribute('id');
-                    }
-                });
-
-                navLinks.forEach(link => {
-                    link.classList.remove('nav-active');
-                    if (link.getAttribute('href') === `#${current}`) {
-                        link.classList.add('nav-active');
-                    }
-                });
-            }
-
-            window.addEventListener('scroll', highlightActiveSection);
-            highlightActiveSection();
-
-            // Stepper animation
-            function animateStepperSteps() {
-                const steps = document.querySelectorAll('.stepper-step');
-                steps.forEach((step, index) => {
-                    setTimeout(() => {
-                        step.classList.add('active');
-                    }, index * 500);
-                });
-            }
-
-            // Trigger stepper animation when section comes into view
-            const stepperSection = document.getElementById('api-560');
-            const stepperObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        animateStepperSteps();
-                        stepperObserver.unobserve(entry.target);
-                    }
-                });
-            });
-            stepperObserver.observe(stepperSection);
-
-            // Interactive sliders
-            const excessAirSlider = document.getElementById('excessAirSlider');
-            const excessAirValue = document.getElementById('excessAirValue');
-            const efficiencyValue = document.getElementById('efficiencyValue');
-            const stackLossBar = document.getElementById('stackLossBar');
-            const stackLossValue = document.getElementById('stackLossValue');
-
-            function updateEfficiencyCalc() {
-                const excessAir = parseFloat(excessAirSlider.value);
-                // Simplified efficiency calculation for demonstration
-                const baseEfficiency = 92;
-                const efficiency = Math.max(65, baseEfficiency - (excessAir * 0.3));
-                const stackLoss = 100 - efficiency;
-
-                excessAirValue.textContent = excessAir;
-                efficiencyValue.textContent = efficiency.toFixed(1) + '%';
-                stackLossValue.textContent = stackLoss.toFixed(1) + '%';
-                stackLossBar.style.width = stackLoss + '%';
-            }
-
-            excessAirSlider.addEventListener('input', updateEfficiencyCalc);
-            updateEfficiencyCalc();
-
-            const stackTempSlider = document.getElementById('stackTempSlider');
-            const stackTempValue = document.getElementById('stackTempValue');
-            const tempLossValue = document.getElementById('tempLossValue');
-            const tempLossBar = document.getElementById('tempLossBar');
-
-            function updateTempLossCalc() {
-                const stackTemp = parseFloat(stackTempSlider.value);
-                // Simplified temperature loss calculation
-                const baseLoss = 5;
-                const tempLoss = baseLoss + ((stackTemp - 200) / 50) * 2;
-
-                stackTempValue.textContent = stackTemp;
-                tempLossValue.textContent = tempLoss.toFixed(1) + '%';
-                tempLossBar.style.width = (tempLoss * 5) + '%'; // Scale for visual effect
-            }
-
-            stackTempSlider.addEventListener('input', updateTempLossCalc);
-            updateTempLossCalc();
-
-            // Checklist persistence
-            const checklistItems = document.querySelectorAll('.checklist-item');
-
-            // Load saved checklist state
-            checklistItems.forEach(item => {
-                const itemName = item.dataset.item;
-                const isChecked = localStorage.getItem(`checklist-${itemName}`) === 'true';
-                item.checked = isChecked;
-            });
-
-            // Save checklist state on change
-            checklistItems.forEach(item => {
-                item.addEventListener('change', () => {
-                    const itemName = item.dataset.item;
-                    localStorage.setItem(`checklist-${itemName}`, item.checked);
-                });
-            });
-
-            // FAQ accordion
-            const faqQuestions = document.querySelectorAll('.faq-question');
-
-            faqQuestions.forEach(question => {
-                question.addEventListener('click', () => {
-                    const target = document.getElementById(question.dataset.target);
-                    const arrow = question.querySelector('svg');
-
-                    if (target.classList.contains('hidden')) {
-                        target.classList.remove('hidden');
-                        arrow.style.transform = 'rotate(180deg)';
-                    } else {
-                        target.classList.add('hidden');
-                        arrow.style.transform = 'rotate(0deg)';
-                    }
-                });
-            });
-
-            // Initialize Mermaid
-            if (window.mermaid) {
-                mermaid.initialize({
-                    startOnLoad: true,
-                    theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default'
-                });
-            }
-
-            // Initialize Chart.js
-            if (window.Chart) {
-                const ctx = document.getElementById('sensitivityChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['200°C', '250°C', '300°C', '350°C', '400°C', '450°C'],
-                        datasets: [{
-                            label: 'Efficiency (%)',
-                            data: [91.5, 89.2, 87.0, 84.8, 82.5, 80.2],
-                            borderColor: 'rgb(59, 130, 246)',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            tension: 0.1,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: false,
-                                min: 78,
-                                max: 93,
-                                title: {
-                                    display: true,
-                                    text: 'Efficiency (%)'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'Stack Temperature'
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        });
-    </script>
 </body>
 </html>
