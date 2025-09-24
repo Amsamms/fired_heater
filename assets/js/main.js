@@ -172,7 +172,10 @@
             "toastLanguage": "Content updated in English",
             "toastDarkModeOn": "Dark mode enabled",
             "toastDarkModeOff": "Light mode enabled",
-            "checklistComplete": "Checklist completed — great job!"
+            "checklistComplete": "Checklist completed — great job!",
+            "templateAlert": "Excel template download will be available soon.",
+            "libraryAlert": "Python library repository is coming soon.",
+            "mobileAlert": "Mobile calculator app is under development."
         },
         "ar": {
             "heroTitle": "كفاءة الأفران المشتعلة",
@@ -344,12 +347,37 @@
             "toastLanguage": "تم تحديث المحتوى بالعربية",
             "toastDarkModeOn": "تم تفعيل الوضع الليلي",
             "toastDarkModeOff": "تم تفعيل الوضع النهاري",
-            "checklistComplete": "تم إكمال عناصر القائمة — عمل رائع!"
+            "checklistComplete": "تم إكمال عناصر القائمة — عمل رائع!",
+            "templateAlert": "قالب إكسل سيكون متاحًا قريبًا.",
+            "libraryAlert": "مكتبة بايثون قيد الإعداد وستتوفر قريبًا.",
+            "mobileAlert": "تطبيق الهاتف قيد التطوير وسيكون متاحًا قريبًا."
         }
     };
     const mermaidDefinitions = {
         "en": "flowchart LR\n    A[Collect Data] --> B[Combustion Worksheet]\n    B --> C{Excess Air & Credits}\n    C --> D[Loss Evaluation]\n    D --> E[Thermal Efficiency]\n    E --> F[Optimization Actions]",
         "ar": "flowchart RL\n    A[جمع البيانات] --> B[ورقة الاحتراق]\n    B --> C{الهواء الزائد والاعتمادات}\n    C --> D[تقييم الخسائر]\n    D --> E[الكفاءة الحرارية]\n    E --> F[خطط التحسين]"
+    };
+    const resourcePromises = window.__resourcePromises || {};
+    const whenResourceReady = (name, callback) => {
+      const resource = resourcePromises[name];
+      const invoke = () => {
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(() => {
+            callback();
+          });
+        } else {
+          setTimeout(() => {
+            callback();
+          }, 0);
+        }
+      };
+      if (resource && typeof resource.then === 'function') {
+        resource
+          .then(invoke)
+          .catch(invoke);
+      } else {
+        invoke();
+      }
     };
     const html = document.documentElement;
     const body = document.body;
@@ -358,12 +386,17 @@
     const mobileMenuToggle = document.getElementById('mobileMenuToggle');
     const mobileMenu = document.getElementById('mobileMenu');
     const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+    const mobileNavBarLinks = document.querySelectorAll('.mobile-nav-bar .nav-link');
+    const desktopNavContainer = document.querySelector('.hidden.md\\:flex');
+    const desktopNavLinks = desktopNavContainer ? desktopNavContainer.querySelectorAll('.nav-link') : [];
     const navLinks = document.querySelectorAll('.nav-link');
     const tocSidebar = document.getElementById('tocSidebar');
     const tocToggle = document.getElementById('tocToggle');
     const tocButton = document.getElementById('tocButton');
     const tocNav = document.getElementById('tocNav');
+    const viewportQuery = window.matchMedia('(max-width: 767px)');
     const sections = document.querySelectorAll('main section[id]');
+    const firstSectionId = sections[0] ? sections[0].id : '';
     const excessAirSlider = document.getElementById('excessAirSlider');
     const stackTempSlider = document.getElementById('stackTempSlider');
     const excessAirValue = document.getElementById('excessAirValue');
@@ -375,6 +408,7 @@
     const tempLossValue = document.getElementById('tempLossValue');
     const checklistItems = document.querySelectorAll('.checklist-item');
     const faqQuestions = document.querySelectorAll('.faq-question');
+    const alertButtons = document.querySelectorAll('[data-alert-key]');
     const stackTempUnitNode = stackTempValue ? stackTempValue.nextSibling : null;
 
     let currentLanguage = localStorage.getItem('preferredLanguage') || 'en';
@@ -384,6 +418,40 @@
     let storedTheme = localStorage.getItem('theme');
     let isDarkMode = storedTheme ? storedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
     let sensitivityChart = null;
+    let manualHighlightTarget = '';
+    let manualHighlightTimestamp = 0;
+    let mermaidRetryAttempts = 0;
+    const manualHighlightDelay = 1200;
+
+    const synchronizeNavHref = () => {
+      const mobileView = viewportQuery.matches;
+      desktopNavLinks.forEach((link) => {
+        const sectionId = link.dataset.sectionId;
+        if (!sectionId) return;
+        if (!link.dataset.originalHref) {
+          const existing = link.getAttribute('href');
+          link.dataset.originalHref = existing && existing.startsWith('#') ? existing : `#${sectionId}`;
+        }
+        if (mobileView) {
+          link.setAttribute('href', `#desktop-${sectionId}`);
+        } else {
+          link.setAttribute('href', link.dataset.originalHref);
+        }
+      });
+      mobileNavBarLinks.forEach((link) => {
+        const sectionId = link.dataset.sectionId;
+        if (!sectionId) return;
+        const targetHref = mobileView ? `#${sectionId}` : `#nav-${sectionId}`;
+        link.setAttribute('href', targetHref);
+      });
+    };
+
+    synchronizeNavHref();
+    if (typeof viewportQuery.addEventListener === 'function') {
+      viewportQuery.addEventListener('change', synchronizeNavHref);
+    } else if (typeof viewportQuery.addListener === 'function') {
+      viewportQuery.addListener(synchronizeNavHref);
+    }
 
     function formatNumber(value, options = {}) {
       try {
@@ -505,8 +573,8 @@
       html.classList.toggle('dark', dark);
       localStorage.setItem('theme', dark ? 'dark' : 'light');
       updateToggleText();
-      renderMermaid();
-        buildChart();
+      whenResourceReady('mermaid', renderMermaid);
+      whenResourceReady('chart', buildChart);
     }
 
     function calculateEfficiency(value) {
@@ -558,7 +626,7 @@
         const heading = section.querySelector('h2');
         if (!heading) return;
         const link = document.createElement('a');
-        link.href = `#${section.id}`;
+        link.href = `#toc-${section.id}`;
         link.className = 'block px-3 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700';
         link.textContent = heading.textContent.trim();
         link.dataset.sectionId = section.id;
@@ -571,11 +639,20 @@
       if (!targetId) return;
       const updateActive = (elements) => {
         elements.forEach((link) => {
+          const datasetTarget = link.dataset.sectionId;
           const href = link.getAttribute('href');
-          if (!href) return;
+          const normalizedHref = href && href.startsWith('#') ? href.slice(1) : '';
+          const isActive = datasetTarget ? datasetTarget === targetId : normalizedHref === targetId;
+          if (isActive) {
             link.classList.add('text-blue-600', 'dark:text-blue-400', 'font-semibold');
+            if (link.classList.contains('nav-link') || link.classList.contains('mobile-nav-link')) {
+              link.classList.add('nav-active');
+            }
           } else {
             link.classList.remove('text-blue-600', 'dark:text-blue-400', 'font-semibold');
+            if (link.classList.contains('nav-link') || link.classList.contains('mobile-nav-link')) {
+              link.classList.remove('nav-active');
+            }
           }
         });
       };
@@ -587,13 +664,41 @@
     }
 
     function observeSections() {
+      let lastObservedSection = '';
       const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            highlightNavigation(entry.target.id);
+        const now = performance.now();
+        if (manualHighlightTarget) {
+          if ((now - manualHighlightTimestamp) < manualHighlightDelay) {
+            highlightNavigation(manualHighlightTarget);
+            return;
           }
-        });
-      }, { threshold: 0.35 });
+          manualHighlightTarget = '';
+        }
+
+        if (firstSectionId) {
+          const firstSection = document.getElementById(firstSectionId);
+          if (firstSection) {
+            const rect = firstSection.getBoundingClientRect();
+            if (window.scrollY < 120 || (rect.top >= 0 && rect.top < 160)) {
+              lastObservedSection = firstSectionId;
+              highlightNavigation(firstSectionId);
+              return;
+            }
+          }
+        }
+
+        const visibleEntries = entries.filter((entry) => entry.isIntersecting);
+        if (visibleEntries.length === 0) {
+          return;
+        }
+
+        visibleEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const activeEntry = visibleEntries[0];
+        if (activeEntry?.target?.id && activeEntry.target.id !== lastObservedSection) {
+          lastObservedSection = activeEntry.target.id;
+          highlightNavigation(activeEntry.target.id);
+        }
+      }, { threshold: [0.1, 0.35, 0.6], rootMargin: '-25% 0px -55% 0px' });
       sections.forEach((section) => observer.observe(section));
     }
 
@@ -623,27 +728,64 @@
 
     function openTocSidebar() {
       if (!tocSidebar) return;
-      tocSidebar.classList.add('is-visible');
+      tocSidebar.classList.add('is-visible', 'translate-x-0');
+      tocSidebar.classList.remove('-translate-x-full');
       body.classList.add('toc-open');
       tocButton?.setAttribute('aria-expanded', 'true');
     }
 
     function closeTocSidebar() {
       if (!tocSidebar) return;
-      tocSidebar.classList.remove('is-visible');
+      tocSidebar.classList.remove('is-visible', 'translate-x-0');
+      tocSidebar.classList.add('-translate-x-full');
       body.classList.remove('toc-open');
       tocButton?.setAttribute('aria-expanded', 'false');
     }
 
     function renderMermaid() {
-      if (!window.mermaid) return;
-      const definition = mermaidDefinitions[currentLanguage];
       const container = document.getElementById('mermaidChart');
-      if (!definition || !container) return;
-      container.innerHTML = definition;
+      if (!container) return;
+      if (!window.mermaid) {
+        if (mermaidRetryAttempts < 5) {
+          mermaidRetryAttempts += 1;
+          setTimeout(() => renderMermaid(), 120);
+        }
+        return;
+      }
+      const definition = mermaidDefinitions[currentLanguage];
+      if (!definition) return;
       const theme = isDarkMode ? 'dark' : 'default';
-      window.mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose' });
-      window.mermaid.run({ nodes: [container] });
+      const handleError = (error) => {
+        console.error('Mermaid rendering failed', error);
+        if (mermaidRetryAttempts < 5) {
+          mermaidRetryAttempts += 1;
+          setTimeout(() => renderMermaid(), 150);
+        }
+      };
+      const applyRenderResult = (result) => {
+        if (!result) return;
+        const svgMarkup = typeof result === 'string' ? result : result.svg;
+        if (typeof svgMarkup === 'string') {
+          container.innerHTML = svgMarkup;
+        }
+        const bindFunctions = result && result.bindFunctions;
+        if (typeof bindFunctions === 'function') {
+          bindFunctions(container);
+        }
+        mermaidRetryAttempts = 0;
+      };
+      try {
+        window.mermaid.initialize({ startOnLoad: false, theme, securityLevel: 'loose' });
+        const renderId = `mermaid-chart-${currentLanguage}-${theme}`;
+        const renderOutcome = window.mermaid.render(renderId, definition);
+        if (renderOutcome && typeof renderOutcome.then === 'function') {
+          renderOutcome.then(applyRenderResult).catch(handleError);
+        } else {
+          applyRenderResult(renderOutcome);
+        }
+      } catch (error) {
+        handleError(error);
+      }
     }
 
     function buildChart() {
@@ -764,16 +906,49 @@
         updateToggleText();
         updateUnits();
         generateTOC();
-        renderMermaid();
-        buildChart();
+        whenResourceReady('mermaid', renderMermaid);
+        whenResourceReady('chart', buildChart);
         const message = translations[currentLanguage].toastLanguage;
         showToast(message);
       });
 
       mobileMenuToggle?.addEventListener('click', toggleMobileMenu);
 
+      const activateLink = (link, event) => {
+        if (!link) return;
+        const datasetTarget = link.dataset.sectionId;
+        const href = link.getAttribute('href');
+        const targetId = datasetTarget || (href && href.startsWith('#') ? href.slice(1) : '');
+        if (!targetId) return;
+        const normalizedHref = `#${targetId}`;
+        if (datasetTarget || href !== normalizedHref) {
+          event?.preventDefault();
+          const targetSection = document.getElementById(targetId);
+          if (targetSection) {
+            targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          try {
+            window.history.replaceState(null, '', normalizedHref);
+          } catch (error) {
+            console.warn('History update failed', error);
+          }
+        }
+        highlightNavigation(targetId);
+        manualHighlightTarget = targetId;
+        manualHighlightTimestamp = performance.now();
+      };
+
+      navLinks.forEach((link) => {
+        link.addEventListener('click', (event) => {
+          activateLink(link, event);
+        });
+      });
+
       mobileNavLinks.forEach((link) => {
-        link.addEventListener('click', closeMobileMenu);
+        link.addEventListener('click', (event) => {
+          activateLink(link, event);
+          closeMobileMenu();
+        });
       });
 
       document.addEventListener('keydown', (event) => {
@@ -796,6 +971,7 @@
       tocNav?.addEventListener('click', (event) => {
         const link = event.target.closest('a');
         if (!link) return;
+        activateLink(link, event);
         closeTocSidebar();
       });
 
@@ -805,6 +981,19 @@
 
       stackTempSlider?.addEventListener('input', (event) => {
         handleStackTempChange(event.target.value);
+      });
+
+      alertButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const { alertKey } = button.dataset;
+          if (!alertKey) return;
+          const catalog = translations[currentLanguage] || translations.en;
+          const fallback = translations.en;
+          const message = (catalog && catalog[alertKey]) || (fallback && fallback[alertKey]);
+          if (message) {
+            showToast(message);
+          }
+        });
       });
 
       checklistItems.forEach((item) => {
@@ -826,11 +1015,29 @@
           const shouldOpen = answer.classList.contains('hidden');
           document.querySelectorAll('.faq-answer').forEach((panel) => {
             panel.classList.add('hidden');
-            panel.previousElementSibling?.querySelector('svg')?.classList.remove('rotate-180');
+            const iconWrapper = panel.previousElementSibling?.querySelector('.faq-arrow');
+            const iconSvg = iconWrapper?.querySelector('svg');
+            if (iconWrapper) {
+              iconWrapper.classList.remove('rotate-180');
+            }
+            if (iconSvg) {
+              iconSvg.style.transform = '';
+              iconSvg.style.transformOrigin = '';
+              iconSvg.style.transformBox = '';
+            }
           });
           if (shouldOpen) {
             answer.classList.remove('hidden');
-            button.querySelector('svg')?.classList.add('rotate-180');
+            const arrowWrapper = button.querySelector('.faq-arrow');
+            const arrowSvg = arrowWrapper?.querySelector('svg');
+            if (arrowWrapper) {
+              arrowWrapper.classList.add('rotate-180');
+            }
+            if (arrowSvg) {
+              arrowSvg.style.transform = 'rotate(180deg)';
+              arrowSvg.style.transformOrigin = 'center';
+              arrowSvg.style.transformBox = 'fill-box';
+            }
           }
         });
       });
@@ -843,8 +1050,13 @@
     restoreState();
     generateTOC();
     observeSections();
-    renderMermaid();
-    buildChart();
+    whenResourceReady('mermaid', renderMermaid);
+    whenResourceReady('chart', buildChart);
+    const initialHash = window.location.hash ? window.location.hash.slice(1) : '';
+    const defaultSectionId = initialHash || (sections[0] ? sections[0].id : '');
+    if (defaultSectionId) {
+      highlightNavigation(defaultSectionId);
+    }
     bindEvents();
     updateToggleText();
   });
