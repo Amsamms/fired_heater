@@ -5,20 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fired Heater Efficiency — API-560 Heat Loss Method, Measurement & Best Practices</title>
     <meta name="description" content="Comprehensive guide to fired heater efficiency calculation using API-560 standards, covering heat loss methods, measurement techniques, and optimization strategies.">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js" defer></script>
+    <link rel="stylesheet" href="assets/css/tailwind.css">
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['-apple-system', 'BlinkMacSystemFont', 'Inter', 'system-ui', 'sans-serif']
+        (function () {
+            const head = document.head || document.getElementsByTagName('head')[0];
+
+            function assignScriptAttributes(target, attributes) {
+                if (!attributes) return;
+                Object.entries(attributes).forEach(([key, value]) => {
+                    if (value === undefined || value === null) return;
+                    if (key === 'async' && value === false) {
+                        target.async = false;
+                    } else if (key === 'defer') {
+                        target.defer = Boolean(value);
+                    } else if (key === 'type') {
+                        target.type = value;
+                    } else {
+                        target.setAttribute(key, value);
                     }
-                }
+                });
             }
-        }
+
+            function loadScriptWithFallback(src, fallback, attributes) {
+                return new Promise((resolve) => {
+                    const cacheBustedSrc = src.includes('?') ? `${src}&cb=${Date.now()}` : `${src}?cb=${Date.now()}`;
+                    const primary = document.createElement('script');
+                    assignScriptAttributes(primary, attributes);
+                    primary.src = cacheBustedSrc;
+                    primary.onerror = () => {
+                        console.warn(`Failed to load ${src}, continuing with fallback ${fallback}`);
+                    };
+
+                    const secondary = document.createElement('script');
+                    assignScriptAttributes(secondary, attributes);
+                    secondary.src = fallback;
+                    secondary.onload = () => resolve(secondary);
+                    secondary.onerror = (error) => {
+                        console.error(`Failed to load fallback script ${fallback}`, error);
+                        resolve(secondary);
+                    };
+
+                    head.appendChild(primary);
+                    head.appendChild(secondary);
+                });
+            }
+
+            window.__resourcePromises = {
+                tailwind: loadScriptWithFallback('assets/vendor/cdn.tailwindcss.com.js?v=1', 'assets/vendor/tailwindcss.stub.js', { defer: true }),
+                chart: loadScriptWithFallback('assets/vendor/cdn.jsdelivr.net_chart.js?v=1', 'assets/vendor/chart.umd.js', { defer: true }),
+                mermaid: loadScriptWithFallback('assets/vendor/cdn.jsdelivr.net_mermaid.js?v=1', 'assets/vendor/mermaid.min.js', { defer: true })
+            };
+        }());
     </script>
     <style>
         html, body {
@@ -43,9 +80,32 @@
             overflow: hidden;
         }
         .sticky-nav { backdrop-filter: blur(12px); }
-        .nav-active { @apply text-blue-600 border-b-2 border-blue-600; }
-        .section-padding { @apply py-16 px-4 sm:px-6 lg:px-8; }
-        .container-max { @apply max-w-7xl mx-auto; }
+        .nav-active {
+            border-bottom: 2px solid currentColor;
+        }
+        .section-padding {
+            padding-top: 4rem;
+            padding-bottom: 4rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        @media (min-width: 640px) {
+            .section-padding {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+        }
+        @media (min-width: 1024px) {
+            .section-padding {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+        .container-max {
+            max-width: 80rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
         .hero-section {
             position: relative;
             overflow: hidden;
@@ -82,6 +142,7 @@
             background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(99,102,241,0.05));
             opacity: 0;
             transition: opacity 0.3s ease;
+            pointer-events: none;
         }
         .card-elevated:hover {
             transform: translateY(-6px);
@@ -89,6 +150,9 @@
         }
         .card-elevated:hover::after {
             opacity: 1;
+        }
+        .slider-container input[type="range"] {
+            min-height: 44px;
         }
         .slider-container input[type="range"] {
             -webkit-appearance: none;
@@ -111,8 +175,23 @@
             border: 3px solid white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        .stepper-step.active { @apply bg-blue-600 text-white; }
-        .stepper-step.completed { @apply bg-green-600 text-white; }
+        .responsive-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        .responsive-table th,
+        .responsive-table td {
+            white-space: normal;
+            word-break: break-word;
+        }
+        .stepper-step.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+        .stepper-step.completed {
+            background-color: #16a34a;
+            color: #ffffff;
+        }
         .tooltip { position: relative; }
         .tooltip .tooltiptext {
             visibility: hidden;
@@ -138,6 +217,27 @@
         .dark .tooltip .tooltiptext {
             background-color: #374151;
         }
+        .mobile-nav-bar {
+            width: 100%;
+            padding-bottom: 0.25rem;
+            margin-left: 0;
+            margin-right: 0;
+            scrollbar-width: none;
+        }
+        .mobile-nav-bar::-webkit-scrollbar {
+            display: none;
+        }
+        .mobile-nav-bar .nav-link {
+            flex-shrink: 0;
+        }
+        .faq-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .faq-arrow.rotate-180 {
+            transform: rotate(180deg);
+        }
         .toc-sidebar {
             transform: translateX(-100%);
             transition: transform 0.3s ease;
@@ -159,6 +259,21 @@
         [dir="rtl"] .toc-button {
             left: auto;
             right: 1rem;
+        }
+        @media (max-width: 767px) {
+            #mobileMenu {
+                display: none !important;
+            }
+            #mobileMenu:not(.hidden) {
+                display: block !important;
+            }
+            .toc-sidebar {
+                max-width: 18rem;
+                width: 100vw;
+            }
+            .tooltip .tooltiptext {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -183,39 +298,50 @@
     <!-- Navigation -->
     <nav id="stickyNav" class="sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 border-b border-gray-200 dark:border-gray-700 sticky-nav">
         <div class="container-max px-4">
-            <div class="flex items-center justify-between h-16">
+            <div class="flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between md:py-0">
                 <div class="hidden md:flex space-x-8 overflow-x-auto">
-                    <a href="#overview" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navOverview">Overview</a>
-                    <a href="#api-560" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navApi560">API-560 Method</a>
-                    <a href="#measurements" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navMeasurements">Measurements</a>
-                    <a href="#configurations" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navConfigurations">Complex Configurations</a>
-                    <a href="#examples" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navExamples">Examples</a>
-                    <a href="#tools" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navTools">Tools & Downloads</a>
-                    <a href="#faq" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navFaq">FAQ</a>
+                    <a href="#overview" data-section-id="overview" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navOverview">Overview</a>
+                    <a href="#api-560" data-section-id="api-560" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navApi560">API-560 Method</a>
+                    <a href="#measurements" data-section-id="measurements" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navMeasurements">Measurements</a>
+                    <a href="#configurations" data-section-id="configurations" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navConfigurations">Complex Configurations</a>
+                    <a href="#examples" data-section-id="examples" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navExamples">Examples</a>
+                    <a href="#tools" data-section-id="tools" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navTools">Tools & Downloads</a>
+                    <a href="#faq" data-section-id="faq" class="nav-link px-3 py-2 text-sm font-medium hover:text-blue-600 transition-colors" data-i18n="navFaq">FAQ</a>
                 </div>
-                <button id="mobileMenuToggle" class="md:hidden p-2" aria-label="Toggle mobile menu">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
+                <div class="flex md:hidden items-center justify-between gap-3">
+                    <div class="flex-1 min-w-0 flex items-center gap-2 overflow-x-auto mobile-nav-bar">
+                        <a href="#nav-overview" data-section-id="overview" class="nav-link px-3 py-2 text-sm font-medium rounded-full bg-white/80 dark:bg-gray-800/70 shadow-sm whitespace-nowrap transition-colors" data-i18n="navOverview">Overview</a>
+                        <a href="#nav-api-560" data-section-id="api-560" class="nav-link px-3 py-2 text-sm font-medium rounded-full bg-white/80 dark:bg-gray-800/70 shadow-sm whitespace-nowrap transition-colors" data-i18n="navApi560">API-560 Method</a>
+                        <a href="#nav-measurements" data-section-id="measurements" class="nav-link px-3 py-2 text-sm font-medium rounded-full bg-white/80 dark:bg-gray-800/70 shadow-sm whitespace-nowrap transition-colors" data-i18n="navMeasurements">Measurements</a>
+                        <a href="#nav-configurations" data-section-id="configurations" class="nav-link px-3 py-2 text-sm font-medium rounded-full bg-white/80 dark:bg-gray-800/70 shadow-sm whitespace-nowrap transition-colors" data-i18n="navConfigurations">Complex Configurations</a>
+                        <a href="#nav-examples" data-section-id="examples" class="nav-link px-3 py-2 text-sm font-medium rounded-full bg-white/80 dark:bg-gray-800/70 shadow-sm whitespace-nowrap transition-colors" data-i18n="navExamples">Examples</a>
+                        <a href="#nav-tools" data-section-id="tools" class="nav-link px-3 py-2 text-sm font-medium rounded-full bg-white/80 dark:bg-gray-800/70 shadow-sm whitespace-nowrap transition-colors" data-i18n="navTools">Tools & Downloads</a>
+                        <a href="#nav-faq" data-section-id="faq" class="nav-link px-3 py-2 text-sm font-medium rounded-full bg-white/80 dark:bg-gray-800/70 shadow-sm whitespace-nowrap transition-colors" data-i18n="navFaq">FAQ</a>
+                    </div>
+                    <button id="mobileMenuToggle" class="md:hidden p-2" aria-label="Toggle mobile menu">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
         <!-- Mobile Menu -->
-        <div id="mobileMenu" class="hidden md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+        <div id="mobileMenu" class="hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
             <div class="px-4 py-2 space-y-1">
-                <a href="#overview" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navOverview">Overview</a>
-                <a href="#api-560" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navApi560">API-560 Method</a>
-                <a href="#measurements" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navMeasurements">Measurements</a>
-                <a href="#configurations" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navConfigurations">Complex Configurations</a>
-                <a href="#examples" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navExamples">Examples</a>
-                <a href="#tools" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navTools">Tools & Downloads</a>
-                <a href="#faq" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navFaq">FAQ</a>
+                <a href="#menu-overview" data-section-id="overview" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navOverview">Overview</a>
+                <a href="#menu-api-560" data-section-id="api-560" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navApi560">API-560 Method</a>
+                <a href="#menu-measurements" data-section-id="measurements" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navMeasurements">Measurements</a>
+                <a href="#menu-configurations" data-section-id="configurations" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navConfigurations">Complex Configurations</a>
+                <a href="#menu-examples" data-section-id="examples" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navExamples">Examples</a>
+                <a href="#menu-tools" data-section-id="tools" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navTools">Tools & Downloads</a>
+                <a href="#menu-faq" data-section-id="faq" class="block px-3 py-2 text-base font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md mobile-nav-link" data-i18n="navFaq">FAQ</a>
             </div>
         </div>
     </nav>
 
     <!-- Table of Contents Sidebar -->
-    <div id="tocSidebar" class="toc-sidebar fixed top-24 md:top-28 h-[calc(100vh-6rem)] w-full max-w-xs md:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-40 overflow-y-auto shadow-xl md:shadow-none rounded-r-3xl md:rounded-none">
+    <div id="tocSidebar" class="toc-sidebar fixed top-24 md:top-28 h-[calc(100vh-6rem)] w-full max-w-xs md:w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-40 overflow-y-auto shadow-xl md:shadow-none rounded-r-3xl md:rounded-none -translate-x-full">
         <div class="p-6">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold" data-i18n="tocTitle">Table of Contents</h3>
@@ -423,7 +549,7 @@
                         <h3 class="text-lg font-semibold" data-i18n="inputsTitle">Required Input Parameters</h3>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                        <table class="responsive-table min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider" data-i18n="parameterColumn">Parameter</th>
@@ -582,7 +708,7 @@
                         <h3 class="text-lg font-semibold" data-i18n="combustionTitle">API-560 Combustion Worksheet (Sample)</h3>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-sm">
+                        <table class="responsive-table min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="componentColumn">Component</th>
@@ -697,7 +823,7 @@
                         <h3 class="text-lg font-semibold" data-i18n="softwareTitle">Software Comparison Matrix</h3>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-sm">
+                        <table class="responsive-table min-w-full divide-y divide-gray-200 dark:divide-gray-600 text-sm">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase" data-i18n="softwareColumnTool">Tool</th>
@@ -760,9 +886,11 @@
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq1">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-lg font-semibold" data-i18n="faqQ1">Why use LHV instead of HHV for fired heater efficiency?</h3>
-                                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
+                                <span class="faq-arrow w-5 h-5 inline-flex items-center justify-center transition-transform">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </span>
                             </div>
                         </button>
                         <div id="faq1" class="faq-answer hidden px-6 py-4">
@@ -774,9 +902,11 @@
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq2">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-lg font-semibold" data-i18n="faqQ2">What's the biggest source of efficiency loss in fired heaters?</h3>
-                                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
+                                <span class="faq-arrow w-5 h-5 inline-flex items-center justify-center transition-transform">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </span>
                             </div>
                         </button>
                         <div id="faq2" class="faq-answer hidden px-6 py-4">
@@ -788,9 +918,11 @@
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq3">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-lg font-semibold" data-i18n="faqQ3">How accurate do flue gas measurements need to be?</h3>
-                                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
+                                <span class="faq-arrow w-5 h-5 inline-flex items-center justify-center transition-transform">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </span>
                             </div>
                         </button>
                         <div id="faq3" class="faq-answer hidden px-6 py-4">
@@ -802,9 +934,11 @@
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq4">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-lg font-semibold" data-i18n="faqQ4">Can I use API-560 for multi-cell heaters?</h3>
-                                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
+                                <span class="faq-arrow w-5 h-5 inline-flex items-center justify-center transition-transform">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </span>
                             </div>
                         </button>
                         <div id="faq4" class="faq-answer hidden px-6 py-4">
@@ -816,9 +950,11 @@
                         <button class="faq-question w-full px-6 py-4 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors" data-target="faq5">
                             <div class="flex justify-between items-center">
                                 <h3 class="text-lg font-semibold" data-i18n="faqQ5">What's the difference between thermal and fuel efficiency?</h3>
-                                <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                </svg>
+                                <span class="faq-arrow w-5 h-5 inline-flex items-center justify-center transition-transform">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </span>
                             </div>
                         </button>
                         <div id="faq5" class="faq-answer hidden px-6 py-4">
